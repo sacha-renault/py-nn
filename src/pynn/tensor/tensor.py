@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..flags import _NO_GRAD
+from ..flags import Flags
 from ..operations import (Operation, Multiplication, Addition)
 from ..types import (
     _float16, _float32, _float64,
@@ -11,51 +11,47 @@ from ..types import (
 )
 
 class Tensor:
-    def __init__(self, shape, dtype = _float32, requires_grad: bool = False) -> None:
-        self.__dtype = dtype
-        self.__values = np.zeros(shape, dtype = dtype)
-        self.__grads = np.zeros(shape, dtype = dtype)
+    def __init__(self, shape, requires_grad: bool = False) -> None:
+        self.__values = np.zeros(shape, dtype = Flags.global_type())
+        self.__grads = np.zeros(shape, dtype = Flags.global_type())
         self.__requires_grad = requires_grad
         self.__children: list[Tensor] = []
         self.__op: Operation = None
 
-    def dd(self):
-        print(np.may_share_memory(self.__values, self.__grads))
-
     @classmethod
-    def zeros(cls, shape, dtype = _float32, requires_grad: bool = False) -> Tensor:
-        tensor = cls(shape, dtype, requires_grad)
-        tensor.values = np.zeros(shape, dtype=dtype)
+    def zeros(cls, shape, requires_grad: bool = False) -> Tensor:
+        tensor = cls(shape, requires_grad)
+        tensor.values = np.zeros(shape, dtype = Flags.global_type())
         print(np.may_share_memory(tensor.values, tensor.grads))
         return tensor
     
     @classmethod
-    def ones(cls, shape, dtype = _float32, requires_grad: bool = False) -> Tensor:
-        tensor = cls(shape, dtype, requires_grad)
-        tensor.values = np.ones(shape, dtype=dtype)
+    def ones(cls, shape, requires_grad: bool = False) -> Tensor:
+        tensor = cls(shape, requires_grad)
+        tensor.values = np.ones(shape, dtype = Flags.global_type())
         return tensor
     
     @classmethod
-    def full(cls, shape, value, dtype = _float32, requires_grad: bool = False) -> Tensor:
-        tensor = cls(shape, dtype, requires_grad)
-        tensor.values = np.full(shape, value, dtype=dtype)
+    def full(cls, shape, value, requires_grad: bool = False) -> Tensor:
+        tensor = cls(shape, requires_grad)
+        tensor.values = np.full(shape, value, dtype = Flags.global_type())
         return tensor
     
     @classmethod
-    def randn(cls, shape, mean = 0, stddev = 1, dtype = _float32, requires_grad: bool = False) -> Tensor:
-        tensor = cls(shape, dtype, requires_grad)
+    def randn(cls, shape, mean = 0, stddev = 1, requires_grad: bool = False) -> Tensor:
+        tensor = cls(shape, requires_grad)
         tensor.values = np.random.normal(mean, stddev, shape) # will be casted by ensure_type
         return tensor
     
     @classmethod
-    def random(cls, shape, min = 0, max = 1, dtype = _float32, requires_grad: bool = False) -> Tensor:
-        tensor = cls(shape, dtype, requires_grad)
+    def random(cls, shape, min = 0, max = 1, requires_grad: bool = False) -> Tensor:
+        tensor = cls(shape, requires_grad)
         tensor.values = np.random.rand(*shape) * (max - min) + min
         return tensor
     
     @classmethod
-    def from_values(cls, values: _TensorArray, dtype = _float32, requires_grad: bool = False) -> Tensor:
-        tensor = cls(values.shape, dtype, requires_grad)
+    def from_values(cls, values: _TensorArray, requires_grad: bool = False) -> Tensor:
+        tensor = cls(values.shape, requires_grad)
         tensor.values = values 
         return tensor
 
@@ -93,7 +89,7 @@ class Tensor:
     
     @ensure_type
     def accumulate_grads(self, grad_updates: _TensorArray) -> None:
-        if self.__requires_grad and not _NO_GRAD:
+        if self.__requires_grad and not Flags.no_grad():
             self.grads += grad_updates
 
     def set_operation(self, operation: Operation) -> None:
@@ -123,14 +119,14 @@ class Tensor:
     # OPERATIONS
     def __mul__(self, other: Tensor) -> Tensor:
         result = Multiplication.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, dtype=self.dtype, requires_grad=self.__requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Multiplication)
         return tensor
     
     def __add__(self, other: Tensor) -> Tensor:
         result = Multiplication.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, dtype=self.dtype, requires_grad=self.__requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Addition)
         return tensor

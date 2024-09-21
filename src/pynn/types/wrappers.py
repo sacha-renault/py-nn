@@ -1,3 +1,5 @@
+from ..flags import Flags
+
 from functools import wraps
 import numpy as np
 
@@ -8,8 +10,7 @@ def ensure_type(func):
         args = list(args)
 
         # 1st arg is self and should be a tensor
-        tensor = args[0]
-        dtype = getattr(tensor, "dtype")
+        dtype = Flags.global_type()
 
         # check that all other arrays are same dtype
         for i, arg in enumerate(args[1:], 1):
