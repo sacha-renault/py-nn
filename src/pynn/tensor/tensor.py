@@ -93,7 +93,8 @@ class Tensor:
             self.grads += grad_updates
 
     def set_operation(self, operation: Operation) -> None:
-        if isinstance(operation, type) and issubclass(operation, Operation):
+        if (isinstance(operation, type) and issubclass(operation, Operation) or 
+            isinstance(operation, Operation)):
             self.__op = operation
         else:
             raise TypeError(f"operation must be Operation type, not {type(operation)}")
