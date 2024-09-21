@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..flags import _NO_GRAD
-from ..operations import Mul
+from ..operations import (Operation, Multiplication)
 from ..types import (
     _float16, _float32, _float64,
     _TensorArray,
@@ -17,11 +17,16 @@ class Tensor:
         self.__grads = np.zeros(shape, dtype = dtype)
         self.__requires_grad = requires_grad
         self.__children: list[Tensor] = []
+        self.__op: Operation = None
+
+    def dd(self):
+        print(np.may_share_memory(self.__values, self.__grads))
 
     @classmethod
     def zeros(cls, shape, dtype = _float32, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, dtype, requires_grad)
         tensor.values = np.zeros(shape, dtype=dtype)
+        print(np.may_share_memory(tensor.values, tensor.grads))
         return tensor
     
     @classmethod
@@ -69,25 +74,57 @@ class Tensor:
     @values.setter
     @ensure_type
     @ensure_shape
-    def values(self, other) -> None:
+    def values(self, other: _TensorArray) -> None:
+        if not isinstance(other, np.ndarray):
+            raise TypeError("other must be an array")
         self.__values = other
 
     @property
     def grads(self) -> _TensorArray:
         return self.__grads
     
+    @grads.setter
+    @ensure_type
+    @ensure_shape
+    def grads(self, other) -> None:
+        if not isinstance(other, np.ndarray):
+            raise TypeError("other must be an array")
+        self.__grads = other
+    
     @ensure_type
     def accumulate_grads(self, grad_updates: _TensorArray) -> None:
         if self.__requires_grad and not _NO_GRAD:
-            self.__grads += grad_updates
+            self.grads += grad_updates
+
+    def set_operation(self, operation: Operation) -> None:
+        if isinstance(operation, type) and issubclass(operation, Operation):
+            self.__op = operation
+        else:
+            raise TypeError(f"operation must be Operation type, not {type(operation)}")
 
     def add_children(self, *children) -> None:
         for child in children:
             self.__children.append(child)
 
+    def forward(self) -> None:
+        result_values = self.__op.forward(*(child.values for child in self.__children))
+        self.values = result_values
+
+    def backward(self) -> None:
+        children_grads_update = self.__op.backward(
+            self.grads,
+            self.values,
+            *(child.values for child in self.__children)
+        )
+
+        for child, grads_updates in zip(self.__children, children_grads_update):
+            child.accumulate_grads(grads_updates) # update grads for every child
+
     # OPERATIONS
     def __mul__(self, other: Tensor) -> Tensor:
-        result = Mul.forward(self.values, other.values)
+        result = Multiplication.forward(self.values, other.values)
         tensor = Tensor.from_values(result, dtype=self.dtype, requires_grad=self.__requires_grad)
+        tensor.add_children(self, other)
+        tensor.set_operation(Multiplication)
         return tensor
 

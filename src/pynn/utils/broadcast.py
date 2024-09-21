@@ -1,3 +1,6 @@
+import numpy as np
+from ..types import _TensorArray
+
 def _find_broadcast_axes(shape_a, shape_b):
     if isinstance(shape_a, int):
         return list(range(len(shape_b)))
@@ -27,4 +30,10 @@ def _find_broadcast_axes(shape_a, shape_b):
         r -= 1
 
     return axes[::-1]  # Return axes in increasing order
+
+def collapse_broadcast(broadcasted_array: _TensorArray, original_shape) -> _TensorArray:
+    if broadcasted_array.shape == original_shape:
+        return broadcasted_array # there was no change
+    expanded_axes = _find_broadcast_axes(broadcasted_array.shape, original_shape)
+    return np.sum(broadcasted_array, axis = tuple(expanded_axes))
         
