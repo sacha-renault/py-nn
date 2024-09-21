@@ -1,6 +1,8 @@
 from .. import xp
 from ..operations import LambdaOperation, Addition
 from ..tensor import Tensor
+from ..utils import collapse_broadcast
+from ..utils.broadcast import _collapse_broadcast
 
 def dot(tensor1: Tensor, tensor2: Tensor) -> Tensor:
     def forward(x, y):
@@ -23,3 +25,44 @@ def dot(tensor1: Tensor, tensor2: Tensor) -> Tensor:
     result_tensor.add_children(tensor1, tensor2)
     result_tensor.set_operation(op)
     return result_tensor
+
+def reduce_sum(tensor: Tensor, axis=None, keepdims=False) -> Tensor:
+    def forward(x):
+        return xp.sum(x, axis=axis, keepdims=keepdims)  # Forward pass using NumPy or CuPy sum
+
+    def backward(parent_grad, parent_values, x):
+        return xp.broadcast_to(parent_grad, x.shape),
+
+    # Create the LambdaOperation for reduce_sum
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    
+    # Add the original tensor as a child and set the operation
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    return result_tensor
+
+def reduce_mean(tensor: Tensor, axis=None, keepdims=False) -> Tensor:
+    def forward(x):
+        return xp.mean(x, axis=axis, keepdims=keepdims)  # Forward pass using NumPy or CuPy mean
+
+    def backward(parent_grad, parent_values, x):
+        # Broadcast the gradient to the original shape and divide by the number of elements reduced
+        if axis is None:
+            grad_x = xp.broadcast_to(parent_grad, x.shape) / parent_grad.size  # Total size of the array
+        else:
+            grad_x = xp.broadcast_to(parent_grad, x.shape) / xp.prod(parent_grad.shape[axis])  # Size along specific axis
+        return grad_x,
+
+    # Create the LambdaOperation for reduce_mean
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    
+    # Add the original tensor as a child and set the operation
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    return result_tensor
+
+
