@@ -13,3 +13,7 @@ _TensorArray64 = npt.NDArray[_float64]
 _TensorArray32 = npt.NDArray[_float32]
 _TensorArray16 = npt.NDArray[_float16]
 _TensorArray = npt.NDArray
+
+# At initialization, type will be float32
+from ..flags import Flags
+Flags.set_global_type(_float32)
