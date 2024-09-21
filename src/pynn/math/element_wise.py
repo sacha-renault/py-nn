@@ -49,3 +49,97 @@ def pow(tensor: Tensor, exponent: float) -> Tensor:
     result_tensor.set_operation(op)
     
     return result_tensor
+
+def square(tensor: Tensor) -> Tensor:
+    return pow(tensor, 2)
+
+def sqrt(tensor: Tensor) -> Tensor:
+    return pow(tensor, 1 / 2)
+
+def abs(tensor: Tensor) -> Tensor:
+    def forward(x):
+        return np.abs(x)  # Forward pass for abs
+
+    def backward(parent_grad, parent_values, x):
+        # Derivative of abs: 1 where x > 0, -1 where x < 0
+        grad_x = parent_grad * np.sign(x)
+        return grad_x,
+
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    
+    return result_tensor
+
+def exp(tensor: Tensor) -> Tensor:
+    def forward(x):
+        return np.exp(x)  # Forward pass for exp
+
+    def backward(parent_grad, parent_values, x):
+        # Derivative of exp is exp(x)
+        grad_x = parent_grad * np.exp(x)
+        return grad_x,
+
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    
+    return result_tensor
+
+def log(tensor: Tensor) -> Tensor:
+    # TODO check why it returns NAN
+    # (probably if there is any value < 0)
+
+    def forward(x):
+        return np.log(x)  # Forward pass for log
+
+    def backward(parent_grad, parent_values, x):
+        # Derivative of log(x) is 1/x
+        grad_x = parent_grad / x
+        return grad_x,
+
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    
+    return result_tensor
+
+def relu(tensor: Tensor) -> Tensor:
+    def forward(x):
+        return np.maximum(0, x)  # Forward pass for ReLU
+
+    def backward(parent_grad, parent_values, x):
+        # Derivative of ReLU: 1 where x > 0, 0 where x <= 0
+        grad_x = parent_grad * (x > 0).astype(x.dtype)
+        return grad_x,
+
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    
+    return result_tensor
+
+def clip(tensor: Tensor, min_value: float = 0, max_value: float = 1) -> Tensor:
+    def forward(x):
+        return np.clip(x, min_value, max_value)  # Forward pass for clip
+
+    def backward(parent_grad, parent_values, x):
+        # Derivative of clip: 1 where min_value < x < max_value, 0 otherwise
+        grad_x = parent_grad * ((x >= min_value) & (x <= max_value)).astype(x.dtype)
+        return grad_x,
+
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    
+    return result_tensor
