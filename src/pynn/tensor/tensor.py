@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..flags import _NO_GRAD
-from ..operations import (Operation, Multiplication)
+from ..operations import (Operation, Multiplication, Addition)
 from ..types import (
     _float16, _float32, _float64,
     _TensorArray,
@@ -126,5 +126,12 @@ class Tensor:
         tensor = Tensor.from_values(result, dtype=self.dtype, requires_grad=self.__requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Multiplication)
+        return tensor
+    
+    def __add__(self, other: Tensor) -> Tensor:
+        result = Multiplication.forward(self.values, other.values)
+        tensor = Tensor.from_values(result, dtype=self.dtype, requires_grad=self.__requires_grad)
+        tensor.add_children(self, other)
+        tensor.set_operation(Addition)
         return tensor
 
