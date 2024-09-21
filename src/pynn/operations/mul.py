@@ -11,11 +11,12 @@ class Multiplication(Operation):
         return np.multiply(*children_values)
     
     @staticmethod
+    @collapse_broadcast
     def backward(parent_grad: _TensorArray, 
                  parent_values: _TensorArray, 
                  *children_values: _TensorArray):
         if len(children_values) != 2:
             raise ValueError("Multiplication can only occure with 2 Tensor")
-        child_grad0 = collapse_broadcast(parent_grad * children_values[1], children_values[0].shape)
-        child_grad1 = collapse_broadcast(parent_grad * children_values[0], children_values[1].shape)
+        child_grad0 = parent_grad * children_values[1]
+        child_grad1 = parent_grad * children_values[0]
         return (child_grad0, child_grad1)

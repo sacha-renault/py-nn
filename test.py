@@ -1,20 +1,29 @@
 from src.pynn.tensor.tensor import Tensor
 import numpy as np
+from src.pynn.flags import Flags
+from src.pynn.graph import ComputeGraph
+
 
 t1 = Tensor.full((5,5), 1, requires_grad=True)
 t2 = Tensor.from_values(np.array([5]), requires_grad=True)
 tensor = t1 * t2
-print(np.min(tensor.values), np.max(tensor.values))
-tensor.grads = np.ones((5,5))
-print(tensor.grads)
+tensor2 = tensor + Tensor.full((5,5), 1, requires_grad=True)
+graph = ComputeGraph(tensor2)
 
-tensor.backward()
+
+tensor2.grads = np.ones((5,5))
+
+graph.backward()
+
 print(t1.grads)
 print(t2.grads)
-print(t2.grads.dtype)
+print(tensor.grads)
 
-from src.pynn.flags import Flags
+t1.values = np.random.rand(5,5)
+graph.forward()
 
-Flags.set_global_type(np.float128)
+
+
+
 
 # tensor.values = np.array(np.random.rand(11, 10))

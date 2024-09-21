@@ -1,3 +1,4 @@
+from functools import wraps
 import numpy as np
 from ..types import _TensorArray
 
@@ -13,7 +14,6 @@ def _find_broadcast_axes(shape_a, shape_b):
     axes = []
 
     while l >= 0 or r >= 0:
-        print(f"l : {l}, r {r}")
         dim_a = shape_a[l] if l >= 0 else 1
         dim_b = shape_b[r] if r >= 0 else 1
 
@@ -31,9 +31,17 @@ def _find_broadcast_axes(shape_a, shape_b):
 
     return axes[::-1]  # Return axes in increasing order
 
-def collapse_broadcast(broadcasted_array: _TensorArray, original_shape) -> _TensorArray:
+def _collapse_broadcast(broadcasted_array: _TensorArray, original_shape) -> _TensorArray:
     if broadcasted_array.shape == original_shape:
         return broadcasted_array # there was no change
     expanded_axes = _find_broadcast_axes(broadcasted_array.shape, original_shape)
     return np.sum(broadcasted_array, axis = tuple(expanded_axes))
+
+def collapse_broadcast(func):
+    @wraps(func)
+    def wrapper(*args):
+        result = func(*args)
+        return [_collapse_broadcast(res, arg.shape) for res, arg in zip(result, args[len(result):])]
+    return wrapper
+
         

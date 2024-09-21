@@ -11,6 +11,7 @@ class Addition(Operation):
         return np.add.reduce(children_values)  # Sum all input tensors
     
     @staticmethod
+    @collapse_broadcast
     def backward(parent_grad: _TensorArray, 
                  parent_values: _TensorArray, 
                  *children_values: _TensorArray):
@@ -19,6 +20,6 @@ class Addition(Operation):
         
         # The gradient is passed equally to all children, respecting broadcasting
         child_grads = [
-            collapse_broadcast(parent_grad, child.shape) for child in children_values
+            parent_grad for _ in children_values
         ]
         return tuple(child_grads)
