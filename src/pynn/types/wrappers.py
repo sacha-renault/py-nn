@@ -54,7 +54,6 @@ def ensure_shape(func):
 
 def auto_convert_to_cupy(func):
     if not Flags.using_cuda():  # Assuming Flags.using_cuda() determines if CUDA is used
-        print("normal")
         return func
 
     @wraps(func)
