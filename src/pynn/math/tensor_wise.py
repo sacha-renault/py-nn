@@ -65,4 +65,25 @@ def reduce_mean(tensor: Tensor, axis=None, keepdims=False) -> Tensor:
     result_tensor.set_operation(op)
     return result_tensor
 
+def softmax(tensor: Tensor) -> Tensor:
+    def forward(x):
+        # Subtract the max for numerical stability
+        x_max = xp.max(x, axis=-1, keepdims=True)
+        exp_x = xp.exp(x - x_max)
+        return exp_x / xp.sum(exp_x, axis=-1, keepdims=True)
 
+    def backward(parent_grad, parent_values, x):
+        raise NotImplementedError("Fuck it for now")
+
+
+    # Create the LambdaOperation for softmax
+    # Ensure tensor is shape (bs, input)
+    # softmax should apply on axis -1
+    op = LambdaOperation(forward, backward)
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+    
+    # Add the original tensor as a child and set the operation
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+    return result_tensor
