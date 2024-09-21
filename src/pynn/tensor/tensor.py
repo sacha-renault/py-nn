@@ -7,7 +7,7 @@ from ..operations import (Operation, Multiplication, Addition, Subtraction, Divi
 from ..types import (
     _float16, _float32, _float64,
     _TensorArray,
-    ensure_type, ensure_shape
+    ensure_type, ensure_shape, auto_convert_to_cupy
 )
 
 class Tensor:
@@ -50,6 +50,7 @@ class Tensor:
         return tensor
     
     @classmethod
+    @auto_convert_to_cupy
     def from_values(cls, values: _TensorArray, requires_grad: bool = False) -> Tensor:
         tensor = cls(values.shape, requires_grad)
         tensor.values = values 

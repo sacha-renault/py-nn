@@ -2,6 +2,7 @@
 class Flags:
     __NO_GRAD = False
     __GLOBAL_TYPE = None
+    __USING_CUDA = False
 
     @classmethod
     def no_grad(cls):
@@ -24,3 +25,14 @@ class Flags:
             cls.__GLOBAL_TYPE = value
         else:
             raise TypeError("set_global_type takes a type as argument.")
+        
+    @classmethod
+    def using_cuda(cls):
+        return cls.__USING_CUDA
+    
+    @classmethod
+    def set_using_cuda(cls, value: bool):
+        if isinstance(value, bool):
+            cls.__USING_CUDA = value
+        else:
+            raise TypeError("value must be a boolean")

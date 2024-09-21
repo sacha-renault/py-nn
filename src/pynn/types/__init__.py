@@ -1,6 +1,6 @@
 from .. import xp
 
-from .wrappers import ensure_type, ensure_shape
+from .wrappers import ensure_type, ensure_shape, auto_convert_to_cupy
 
 # float type
 _float64 = xp.float64
