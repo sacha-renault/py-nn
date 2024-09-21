@@ -56,8 +56,8 @@ class Tensor:
         return tensor
 
     @property
-    def dtype(self):
-        return self.__dtype
+    def children(self) -> list[Tensor]:
+        return self.__children
     
     @property
     def shape(self):
@@ -103,18 +103,20 @@ class Tensor:
             self.__children.append(child)
 
     def forward(self) -> None:
-        result_values = self.__op.forward(*(child.values for child in self.__children))
-        self.values = result_values
+        if self.__op is not None:
+            result_values = self.__op.forward(*(child.values for child in self.__children))
+            self.values = result_values
 
     def backward(self) -> None:
-        children_grads_update = self.__op.backward(
-            self.grads,
-            self.values,
-            *(child.values for child in self.__children)
-        )
+        if self.__op is not None:
+            children_grads_update = self.__op.backward(
+                self.grads,
+                self.values,
+                *(child.values for child in self.__children)
+            )
 
-        for child, grads_updates in zip(self.__children, children_grads_update):
-            child.accumulate_grads(grads_updates) # update grads for every child
+            for child, grads_updates in zip(self.__children, children_grads_update):
+                child.accumulate_grads(grads_updates) # update grads for every child
 
     # OPERATIONS
     def __mul__(self, other: Tensor) -> Tensor:
