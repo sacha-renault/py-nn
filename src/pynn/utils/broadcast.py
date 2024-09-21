@@ -40,8 +40,15 @@ def _collapse_broadcast(broadcasted_array: _TensorArray, original_shape) -> _Ten
 def collapse_broadcast(func):
     @wraps(func)
     def wrapper(*args):
+        # perform function normally
         result = func(*args)
-        return [_collapse_broadcast(res, arg.shape) for res, arg in zip(result, args[-len(result):])]
+        
+        # Handle the case where the result is a tuple or list of gradients
+        if isinstance(result, (tuple, list)):
+            return [ _collapse_broadcast(res, arg.shape) for res, arg in zip(result, args[-len(result):]) ]
+        else:
+            # For single tensor return values (just in case)
+            return _collapse_broadcast(result, args[-1].shape)
     return wrapper
 
         
