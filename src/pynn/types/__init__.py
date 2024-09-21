@@ -8,9 +8,9 @@ _float32 = xp.float32
 _float16 = xp.float16
 
 # array types
-_TensorArray64 = xp.ndarray[_float64]
-_TensorArray32 = xp.ndarray[_float32]
-_TensorArray16 = xp.ndarray[_float16]
+# _TensorArray64 = xp.ndarray[_float64]
+# _TensorArray32 = xp.ndarray[_float32]
+# _TensorArray16 = xp.ndarray[_float16]
 _TensorArray = xp.ndarray
 
 # At initialization, type will be float32
