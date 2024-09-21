@@ -41,7 +41,7 @@ def collapse_broadcast(func):
     @wraps(func)
     def wrapper(*args):
         result = func(*args)
-        return [_collapse_broadcast(res, arg.shape) for res, arg in zip(result, args[len(result):])]
+        return [_collapse_broadcast(res, arg.shape) for res, arg in zip(result, args[-len(result):])]
     return wrapper
 
         
