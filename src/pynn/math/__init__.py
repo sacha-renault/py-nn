@@ -1,1 +1,1 @@
-from .element_wise import tanh
+from .element_wise import *
