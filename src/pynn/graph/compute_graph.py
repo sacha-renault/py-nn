@@ -1,4 +1,5 @@
 from ..tensor import Tensor
+from .. import xp
 
 def _topological_order(output_tensor: Tensor) -> list[Tensor]:
     seen = set()
@@ -22,8 +23,10 @@ class ComputeGraph:
             virtual_output = Tensor((1))
             virtual_output.add_children(*model_output)
             ordered_nodes = _topological_order(virtual_output)[:-1]
+            self.__outputs = model_output
         else:
             ordered_nodes = _topological_order(model_output)
+            self.__outputs = [model_output]
         
         self.__ordered_nodes = ordered_nodes
 
@@ -32,5 +35,9 @@ class ComputeGraph:
             node.forward()
 
     def backward(self) -> None:
+        # start by setting grad = 1 for every output
+        for output in self.__outputs:
+            output.grads = xp.ones(output.shape)
+            
         for node in reversed(self.__ordered_nodes):
             node.backward()
