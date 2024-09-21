@@ -1,4 +1,3 @@
-import numpy as np
 from collections.abc import Callable
 from typing import Any
 from .base_operation import Operation

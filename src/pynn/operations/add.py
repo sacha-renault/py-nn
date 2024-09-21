@@ -1,4 +1,4 @@
-import numpy as np
+from .. import xp
 from .base_operation import Operation
 from ..utils import collapse_broadcast
 from ..types import _TensorArray
@@ -8,7 +8,7 @@ class Addition(Operation):
     def forward(*children_values):
         if len(children_values) < 2:
             raise ValueError("Addition requires at least 2 Tensors")
-        return np.add.reduce(children_values)  # Sum all input tensors
+        return xp.add.reduce(children_values)  # Sum all input tensors
     
     @staticmethod
     @collapse_broadcast

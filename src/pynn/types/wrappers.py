@@ -1,7 +1,7 @@
 from ..flags import Flags
 
 from functools import wraps
-import numpy as np
+from .. import xp
 
 def ensure_type(func):
     @wraps(func)
@@ -14,12 +14,12 @@ def ensure_type(func):
 
         # check that all other arrays are same dtype
         for i, arg in enumerate(args[1:], 1):
-            if isinstance(arg, np.ndarray) and arg.dtype != dtype:
+            if isinstance(arg, xp.ndarray) and arg.dtype != dtype:
                 args[i] = arg.astype(dtype, copy=False)
 
         # check also for kwargs 
         for key, value in kwargs.items():
-            if isinstance(value, np.ndarray) and value.dtype != dtype:
+            if isinstance(value, xp.ndarray) and value.dtype != dtype:
                 kwargs[key] = value.astype(dtype, copy=False)
 
         return func(*args, **kwargs)
@@ -37,13 +37,13 @@ def ensure_shape(func):
 
         # check that all other arrays have the same shape
         for i, arg in enumerate(args[1:], 1):
-            if isinstance(arg, np.ndarray) and arg.shape != shape:
+            if isinstance(arg, xp.ndarray) and arg.shape != shape:
                 raise Exception(f"Shape mismatch for arg {i}. "
                                 f"Tensor shape: {shape}, arg shape: {arg.shape}")
 
         # check also for kwargs 
         for key, value in kwargs.items():
-            if isinstance(value, np.ndarray) and value.shape != shape:
+            if isinstance(value, xp.ndarray) and value.shape != shape:
                 raise Exception(f"Shape mismatch for kwarg '{key}'. "
                                 f"Tensor shape: {shape}, kwarg shape: {value.shape}")
 

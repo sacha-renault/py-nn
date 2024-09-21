@@ -1,4 +1,4 @@
-import numpy as np
+from .. import xp
 from .base_operation import Operation
 from ..utils import collapse_broadcast
 from ..types import _TensorArray
@@ -8,7 +8,7 @@ class Division(Operation):
     def forward(*children_values):
         if len(children_values) != 2:
             raise ValueError("Division requires exactly 2 Tensors")
-        return np.divide(*children_values)  # Element-wise division
+        return xp.divide(*children_values)  # Element-wise division
     
     @staticmethod
     @collapse_broadcast

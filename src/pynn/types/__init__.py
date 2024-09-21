@@ -1,18 +1,17 @@
-from numpy import typing as npt
-import numpy as np
+from .. import xp
 
 from .wrappers import ensure_type, ensure_shape
 
 # float type
-_float64 = np.float64
-_float32 = np.float32
-_float16 = np.float16
+_float64 = xp.float64
+_float32 = xp.float32
+_float16 = xp.float16
 
 # array types
-_TensorArray64 = npt.NDArray[_float64]
-_TensorArray32 = npt.NDArray[_float32]
-_TensorArray16 = npt.NDArray[_float16]
-_TensorArray = npt.NDArray
+_TensorArray64 = xp.ndarray[_float64]
+_TensorArray32 = xp.ndarray[_float32]
+_TensorArray16 = xp.ndarray[_float16]
+_TensorArray = xp.ndarray
 
 # At initialization, type will be float32
 from ..flags import Flags

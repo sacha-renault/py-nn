@@ -1,4 +1,4 @@
-import numpy as np
+from .. import xp
 from .base_operation import Operation
 from ..utils import collapse_broadcast
 from ..types import _TensorArray
@@ -8,7 +8,7 @@ class Multiplication(Operation):
     def forward(*children_values):
         if len(children_values) != 2:
             raise ValueError("Multiplication can only occure with 2 Tensor")
-        return np.multiply(*children_values)
+        return xp.multiply(*children_values)
     
     @staticmethod
     @collapse_broadcast

@@ -1,10 +1,10 @@
-import numpy as np
+from .. import xp
 from ..operations import LambdaOperation
 from ..tensor import Tensor
 
 def tanh(tensor: Tensor) -> Tensor:
     def forward(x):
-        return np.tanh(x)  # Forward pass for tanh
+        return xp.tanh(x)  # Forward pass for tanh
 
     def backward(parent_grad, parent_values, x):
         # Use parent_values which already contains tanh(x)
@@ -28,11 +28,11 @@ def tanh(tensor: Tensor) -> Tensor:
 
 def pow(tensor: Tensor, exponent: float) -> Tensor:
     def forward(x):
-        return np.power(x, exponent)  # Forward pass for power
+        return xp.power(x, exponent)  # Forward pass for power
 
     def backward(parent_grad, parent_values, x):
         # Derivative: exponent * x^(exponent - 1)
-        grad_x = parent_grad * exponent * np.power(x, exponent - 1)
+        grad_x = parent_grad * exponent * xp.power(x, exponent - 1)
         return grad_x,  # Return a tuple with the gradient
 
     # Create the LambdaOperation for pow
@@ -58,11 +58,11 @@ def sqrt(tensor: Tensor) -> Tensor:
 
 def abs(tensor: Tensor) -> Tensor:
     def forward(x):
-        return np.abs(x)  # Forward pass for abs
+        return xp.abs(x)  # Forward pass for abs
 
     def backward(parent_grad, parent_values, x):
         # Derivative of abs: 1 where x > 0, -1 where x < 0
-        grad_x = parent_grad * np.sign(x)
+        grad_x = parent_grad * xp.sign(x)
         return grad_x,
 
     op = LambdaOperation(forward, backward)
@@ -75,11 +75,11 @@ def abs(tensor: Tensor) -> Tensor:
 
 def exp(tensor: Tensor) -> Tensor:
     def forward(x):
-        return np.exp(x)  # Forward pass for exp
+        return xp.exp(x)  # Forward pass for exp
 
     def backward(parent_grad, parent_values, x):
         # Derivative of exp is exp(x)
-        grad_x = parent_grad * np.exp(x)
+        grad_x = parent_grad * xp.exp(x)
         return grad_x,
 
     op = LambdaOperation(forward, backward)
@@ -95,7 +95,7 @@ def log(tensor: Tensor) -> Tensor:
     # (probably if there is any value < 0)
 
     def forward(x):
-        return np.log(x)  # Forward pass for log
+        return xp.log(x)  # Forward pass for log
 
     def backward(parent_grad, parent_values, x):
         # Derivative of log(x) is 1/x
@@ -112,7 +112,7 @@ def log(tensor: Tensor) -> Tensor:
 
 def relu(tensor: Tensor) -> Tensor:
     def forward(x):
-        return np.maximum(0, x)  # Forward pass for ReLU
+        return xp.maximum(0, x)  # Forward pass for ReLU
 
     def backward(parent_grad, parent_values, x):
         # Derivative of ReLU: 1 where x > 0, 0 where x <= 0
@@ -129,7 +129,7 @@ def relu(tensor: Tensor) -> Tensor:
 
 def clip(tensor: Tensor, min_value: float = 0, max_value: float = 1) -> Tensor:
     def forward(x):
-        return np.clip(x, min_value, max_value)  # Forward pass for clip
+        return xp.clip(x, min_value, max_value)  # Forward pass for clip
 
     def backward(parent_grad, parent_values, x):
         # Derivative of clip: 1 where min_value < x < max_value, 0 otherwise

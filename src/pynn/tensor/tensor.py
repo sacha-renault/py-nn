@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy as np
+from .. import xp
 
 from ..flags import Flags
 from ..operations import (Operation, Multiplication, Addition, Subtraction, Division)
@@ -12,8 +12,8 @@ from ..types import (
 
 class Tensor:
     def __init__(self, shape, requires_grad: bool = False) -> None:
-        self.__values = np.zeros(shape, dtype = Flags.global_type())
-        self.__grads = np.zeros(shape, dtype = Flags.global_type())
+        self.__values = xp.zeros(shape, dtype = Flags.global_type())
+        self.__grads = xp.zeros(shape, dtype = Flags.global_type())
         self.__requires_grad = requires_grad
         self.__children: list[Tensor] = []
         self.__op: Operation = None
@@ -21,32 +21,32 @@ class Tensor:
     @classmethod
     def zeros(cls, shape, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
-        tensor.values = np.zeros(shape, dtype = Flags.global_type())
-        print(np.may_share_memory(tensor.values, tensor.grads))
+        tensor.values = xp.zeros(shape, dtype = Flags.global_type())
+        print(xp.may_share_memory(tensor.values, tensor.grads))
         return tensor
     
     @classmethod
     def ones(cls, shape, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
-        tensor.values = np.ones(shape, dtype = Flags.global_type())
+        tensor.values = xp.ones(shape, dtype = Flags.global_type())
         return tensor
     
     @classmethod
     def full(cls, shape, value, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
-        tensor.values = np.full(shape, value, dtype = Flags.global_type())
+        tensor.values = xp.full(shape, value, dtype = Flags.global_type())
         return tensor
     
     @classmethod
     def randn(cls, shape, mean = 0, stddev = 1, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
-        tensor.values = np.random.normal(mean, stddev, shape) # will be casted by ensure_type
+        tensor.values = xp.random.normal(mean, stddev, shape) # will be casted by ensure_type
         return tensor
     
     @classmethod
     def random(cls, shape, min = 0, max = 1, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
-        tensor.values = np.random.rand(*shape) * (max - min) + min
+        tensor.values = xp.random.rand(*shape) * (max - min) + min
         return tensor
     
     @classmethod
@@ -75,7 +75,7 @@ class Tensor:
     @ensure_type
     @ensure_shape
     def values(self, other: _TensorArray) -> None:
-        if not isinstance(other, np.ndarray):
+        if not isinstance(other, xp.ndarray):
             raise TypeError("other must be an array")
         self.__values = other
 
@@ -87,7 +87,7 @@ class Tensor:
     @ensure_type
     @ensure_shape
     def grads(self, other) -> None:
-        if not isinstance(other, np.ndarray):
+        if not isinstance(other, xp.ndarray):
             raise TypeError("other must be an array")
         self.__grads = other
     

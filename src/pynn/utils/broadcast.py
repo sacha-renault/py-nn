@@ -1,5 +1,5 @@
 from functools import wraps
-import numpy as np
+from .. import xp
 from ..types import _TensorArray
 
 def _find_broadcast_axes(shape_a, shape_b):
@@ -35,7 +35,7 @@ def _collapse_broadcast(broadcasted_array: _TensorArray, original_shape) -> _Ten
     if broadcasted_array.shape == original_shape:
         return broadcasted_array # there was no change
     expanded_axes = _find_broadcast_axes(broadcasted_array.shape, original_shape)
-    return np.sum(broadcasted_array, axis = tuple(expanded_axes))
+    return xp.sum(broadcasted_array, axis = tuple(expanded_axes))
 
 def collapse_broadcast(func):
     @wraps(func)

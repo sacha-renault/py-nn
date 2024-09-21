@@ -1,4 +1,4 @@
-import numpy as np
+from .. import xp
 from .base_operation import Operation
 from ..utils import collapse_broadcast
 from ..types import _TensorArray
@@ -8,7 +8,7 @@ class Subtraction(Operation):
     def forward(*children_values):
         if len(children_values) != 2:
             raise ValueError("Subtraction requires exactly 2 Tensors")
-        return np.subtract(*children_values)
+        return xp.subtract(*children_values)
     
     @staticmethod
     @collapse_broadcast
