@@ -13,5 +13,6 @@ class LambdaOperation(Operation):
     def forward(self, *children_values) -> _TensorArray:
         return self.__forward(*children_values)
     
+    @collapse_broadcast
     def backward(self, parent_grad, parent_values, *children_values) -> tuple[_TensorArray]:
         return self.__backward(parent_grad, parent_values, *children_values)

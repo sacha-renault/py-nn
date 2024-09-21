@@ -60,6 +60,10 @@ class Tensor:
         return self.__children
     
     @property
+    def requires_grad(self) -> bool:
+        return self.__requires_grad
+    
+    @property
     def shape(self):
         return self.__values.shape # we could use grad but it's the same in the end
 
