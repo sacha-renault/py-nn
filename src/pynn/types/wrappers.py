@@ -1,7 +1,9 @@
-from ..flags import Flags
-
 from functools import wraps
+
+import numpy as np
+
 from .. import xp
+from ..flags import Flags
 
 def ensure_type(func):
     @wraps(func)
@@ -46,6 +48,29 @@ def ensure_shape(func):
             if isinstance(value, xp.ndarray) and value.shape != shape:
                 raise Exception(f"Shape mismatch for kwarg '{key}'. "
                                 f"Tensor shape: {shape}, kwarg shape: {value.shape}")
+
+        return func(*args, **kwargs)
+    return wrapper
+
+def auto_convert_to_cupy(func):
+    if not Flags.using_cuda():  # Assuming Flags.using_cuda() determines if CUDA is used
+        print("normal")
+        return func
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Convert tuple as list to allow modification
+        args = list(args)
+
+        # Check that all positional arguments are numpy arrays, convert to cupy
+        for i, arg in enumerate(args):
+            if isinstance(arg, np.ndarray):
+                args[i] = xp.asarray(arg)  # Convert numpy to cupy
+
+        # Check for keyword arguments that are numpy arrays and convert them to cupy
+        for key, value in kwargs.items():
+            if isinstance(value, np.ndarray):
+                kwargs[key] = xp.asarray(value)  # Convert numpy to cupy
 
         return func(*args, **kwargs)
     return wrapper
