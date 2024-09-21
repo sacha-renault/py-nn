@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..flags import Flags
-from ..operations import (Operation, Multiplication, Addition)
+from ..operations import (Operation, Multiplication, Addition, Subtraction, Division)
 from ..types import (
     _float16, _float32, _float64,
     _TensorArray,
@@ -127,9 +127,23 @@ class Tensor:
         return tensor
     
     def __add__(self, other: Tensor) -> Tensor:
-        result = Multiplication.forward(self.values, other.values)
+        result = Addition.forward(self.values, other.values)
         tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Addition)
+        return tensor
+    
+    def __sub__(self, other: Tensor) -> Tensor:
+        result = Subtraction.forward(self.values, other.values)
+        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        tensor.add_children(self, other)
+        tensor.set_operation(Subtraction)
+        return tensor
+    
+    def __truediv__(self, other: Tensor) -> Tensor:
+        result = Division.forward(self.values, other.values)
+        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        tensor.add_children(self, other)
+        tensor.set_operation(Division)
         return tensor
 
