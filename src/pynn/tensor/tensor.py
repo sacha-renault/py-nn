@@ -3,7 +3,8 @@ import numbers
 
 from .. import xp
 from ..flags import Flags
-from ..operations import (Operation, Multiplication, Addition, Subtraction, Division)
+from ..operations import (Operation, Multiplication, Addition, Subtraction, Division,
+                          Negation)
 from ..types import (
     _float16, _float32, _float64,
     _TensorArray,
@@ -154,4 +155,18 @@ class Tensor:
         tensor.add_children(self, other)
         tensor.set_operation(Division)
         return tensor
+    
+    def __neg__(self) -> Tensor:
+        # Perform the negation on the tensor's values
+        result = -self.values
+        
+        # Create a new tensor with the negated values
+        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        
+        # Add the current tensor as a child to keep track of gradients
+        tensor.add_children(self)
+        
+        # Set the operation to Negation if you have a custom operation tracking
+        tensor.set_operation(Negation)  # Assuming a Negation operation exists
 
+        return tensor

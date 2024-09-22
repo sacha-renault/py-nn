@@ -4,3 +4,4 @@ from .add import Addition
 from .subtraction import Subtraction
 from .division import Division
 from .lambda_operation import LambdaOperation
+from .negation import Negation
