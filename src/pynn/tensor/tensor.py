@@ -23,7 +23,6 @@ class Tensor:
     def zeros(cls, shape, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
         tensor.values = xp.zeros(shape, dtype = Flags.global_type())
-        print(xp.may_share_memory(tensor.values, tensor.grads))
         return tensor
     
     @classmethod
