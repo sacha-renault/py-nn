@@ -17,7 +17,7 @@ class Tensor:
         self.__grads = xp.zeros(shape, dtype = Flags.global_type())
         self.__requires_grad = requires_grad
         self.__children: list[Tensor] = []
-        self.__op: Operation = None
+        self._op: Operation = None
 
     @classmethod
     def zeros(cls, shape, requires_grad: bool = False) -> Tensor:
@@ -97,76 +97,78 @@ class Tensor:
     
     @ensure_type
     def accumulate_grads(self, grad_updates: _TensorArray) -> None:
-        if self.__requires_grad and not Flags.no_grad():
+        if self.requires_grad and not Flags.no_grad():
             self.grads += grad_updates
 
     def set_operation(self, operation: Operation) -> None:
         if (isinstance(operation, type) and issubclass(operation, Operation) or 
             isinstance(operation, Operation)):
-            self.__op = operation
+            self._op = operation
         else:
             raise TypeError(f"operation must be Operation type, not {type(operation)}")
 
     def add_children(self, *children) -> None:
         for child in children:
-            self.__children.append(child)
+            self.children.append(child)
 
     def forward(self) -> None:
-        if self.__op is not None:
-            result_values = self.__op.forward(*(child.values for child in self.__children))
+        if self._op is not None:
+            result_values = self._op.forward(*(child.values for child in self.children))
             self.values = result_values
 
     def backward(self) -> None:
-        if self.__op is not None:
-            children_grads_update = self.__op.backward(
+        if self._op is not None:
+            children_grads_update = self._op.backward(
                 self.grads,
                 self.values,
-                *(child.values for child in self.__children)
+                *(child.values for child in self.children)
             )
 
-            for child, grads_updates in zip(self.__children, children_grads_update):
+            for child, grads_updates in zip(self.children, children_grads_update):
                 child.accumulate_grads(grads_updates) # update grads for every child
 
     # OPERATIONS
     def __mul__(self, other: Tensor) -> Tensor:
         result = Multiplication.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Multiplication)
         return tensor
     
     def __add__(self, other: Tensor) -> Tensor:
         result = Addition.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Addition)
         return tensor
     
     def __sub__(self, other: Tensor) -> Tensor:
         result = Subtraction.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Subtraction)
         return tensor
     
     def __truediv__(self, other: Tensor) -> Tensor:
         result = Division.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Division)
         return tensor
     
     def __neg__(self) -> Tensor:
-        # Perform the negation on the tensor's values
         result = -self.values
-        
-        # Create a new tensor with the negated values
-        tensor = Tensor.from_values(result, requires_grad=self.__requires_grad)
-        
-        # Add the current tensor as a child to keep track of gradients
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
         tensor.add_children(self)
-        
-        # Set the operation to Negation if you have a custom operation tracking
-        tensor.set_operation(Negation)  # Assuming a Negation operation exists
-
+        tensor.set_operation(Negation)
         return tensor
+    
+    def __getitem__(self, key) -> Tensor: 
+        # to avoid circular import, TensorView is imported here
+        from .tensor_view import _TensorView
+        tensor = _TensorView(self, key)
+        tensor.add_children(self)
+        return tensor
+    
+    def __repr__(self) -> str:
+        return f"<Tensor: shape={self.shape}>"
