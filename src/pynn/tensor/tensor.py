@@ -1,7 +1,7 @@
 from __future__ import annotations
+import numbers
 
 from .. import xp
-
 from ..flags import Flags
 from ..operations import (Operation, Multiplication, Addition, Subtraction, Division)
 from ..types import (
@@ -76,7 +76,9 @@ class Tensor:
     @ensure_type
     @ensure_shape
     def values(self, other: _TensorArray) -> None:
-        if not isinstance(other, xp.ndarray):
+        if isinstance(other, (numbers.Number, xp.generic)):
+            other = xp.array([other]) # convert into (1,)
+        elif not isinstance(other, xp.ndarray):
             raise TypeError("other must be an array")
         self.__values = other
 

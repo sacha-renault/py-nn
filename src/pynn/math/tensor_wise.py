@@ -1,7 +1,7 @@
 from .. import xp
 from ..operations import LambdaOperation, Addition
 from ..tensor import Tensor
-from ..utils import collapse_broadcast
+from ..utils import collapse_broadcast, get_expanded_reduced_shape
 from ..utils.broadcast import _collapse_broadcast
 
 def dot(tensor1: Tensor, tensor2: Tensor) -> Tensor:
@@ -31,7 +31,12 @@ def reduce_sum(tensor: Tensor, axis=None, keepdims=False) -> Tensor:
         return xp.sum(x, axis=axis, keepdims=keepdims)  # Forward pass using NumPy or CuPy sum
 
     def backward(parent_grad, parent_values, x):
-        return xp.broadcast_to(parent_grad, x.shape),
+        # calculate target shape
+        target_shape = get_expanded_reduced_shape(x.shape, axis)
+
+        # apply
+        reshaped = xp.reshape(parent_grad, target_shape)
+        return xp.broadcast_to(reshaped, x.shape),
 
     # Create the LambdaOperation for reduce_sum
     op = LambdaOperation(forward, backward)
@@ -48,11 +53,17 @@ def reduce_mean(tensor: Tensor, axis=None, keepdims=False) -> Tensor:
         return xp.mean(x, axis=axis, keepdims=keepdims)  # Forward pass using NumPy or CuPy mean
 
     def backward(parent_grad, parent_values, x):
+        # calculate target shape
+        target_shape = get_expanded_reduced_shape(x.shape, axis)
+
+        # apply
+        reshaped = xp.reshape(parent_grad, target_shape)
+
         # Broadcast the gradient to the original shape and divide by the number of elements reduced
         if axis is None:
-            grad_x = xp.broadcast_to(parent_grad, x.shape) / parent_grad.size  # Total size of the array
+            grad_x = xp.broadcast_to(reshaped, x.shape) / x.size  # Total size of the array
         else:
-            grad_x = xp.broadcast_to(parent_grad, x.shape) / xp.prod(parent_grad.shape[axis])  # Size along specific axis
+            grad_x = xp.broadcast_to(reshaped, x.shape) / xp.prod(x.shape[axis])  # Size along specific axis
         return grad_x,
 
     # Create the LambdaOperation for reduce_mean
@@ -65,15 +76,17 @@ def reduce_mean(tensor: Tensor, axis=None, keepdims=False) -> Tensor:
     result_tensor.set_operation(op)
     return result_tensor
 
-def softmax(tensor: Tensor) -> Tensor:
+def softmax(tensor: Tensor, axis: int = -1) -> Tensor:
     def forward(x):
-        # Subtract the max for numerical stability
         x_max = xp.max(x, axis=-1, keepdims=True)
         exp_x = xp.exp(x - x_max)
         return exp_x / xp.sum(exp_x, axis=-1, keepdims=True)
 
     def backward(parent_grad, parent_values, x):
-        raise NotImplementedError("Fuck it for now")
+        s = parent_values  # This is the softmax result from the forward step
+        sum_term = xp.sum(parent_grad * s, axis=axis, keepdims=True)
+        grad_x = s * (parent_grad - sum_term)
+        return grad_x,
 
 
     # Create the LambdaOperation for softmax

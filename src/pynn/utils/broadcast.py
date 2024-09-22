@@ -51,4 +51,23 @@ def collapse_broadcast(func):
             return _collapse_broadcast(result, args[-1].shape)
     return wrapper
 
+def get_expanded_reduced_shape(original_shape, axis: int | tuple | None):
+    """get expanded shape with 1 where axis where reduced
+    """
+    # first convert to list
+    original_shape = list(original_shape)
+
+    if axis is None:
+        return (1,)
+    elif isinstance(axis, int):
+        original_shape[axis] = 1
+        return tuple(original_shape)
+        
+    elif isinstance(axis, tuple):
+        for ax in axis:
+            original_shape[ax] = 1
+        return tuple(original_shape)
+    else:
+        raise TypeError(f"Error, expected tuple, got : {type(axis)}")
+
         
