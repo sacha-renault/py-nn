@@ -9,9 +9,9 @@ from ..types import (
 )
 
 class _TensorView(Tensor):
-    def __init__(self, ref_tensor: Tensor, slices: list[slice]) -> None:
+    def __init__(self, ref_tensor: Tensor, slices: slice | list[slice]) -> None:
         self.__ref_tensor = ref_tensor
-        self.__slices = slices
+        self.__slices = slices if isinstance(slice, list) else [slices]
         self._op = None
 
     @property
