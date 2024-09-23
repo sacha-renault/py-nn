@@ -116,8 +116,7 @@ def relu(tensor: Tensor) -> Tensor:
 
     def backward(parent_grad, parent_values, x):
         # Derivative of ReLU: 1 where x > 0, 0 where x <= 0
-        grad_x = parent_grad * (x > 0).astype(x.dtype)
-        return grad_x,
+        return xp.where(x > 0, parent_grad, xp.zeros_like(parent_grad)),
 
     op = LambdaOperation(forward, backward)
     result = op.forward(tensor.values)
