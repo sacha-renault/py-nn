@@ -1,25 +1,43 @@
 from typing import Any
+from collections.abc import Callable
 from .layer import Layer
 from .. import xp
 from ..tensor import Tensor
 from ..math import dot
 from ..types import auto_convert_to_cupy
+from ..utils.initializer import initializer_xavier_relu
 
 class Dense(Layer):
     def __init__(self, 
                 input_features: int, 
-                output_features: int) -> None:
+                output_features: int,
+                activation = None,
+                stddev_initializer: xp.generic | Callable[[int, int], float] | None = None) -> None:
+        # get stddev value
+        if stddev_initializer is None:
+            stddev = initializer_xavier_relu(input_features, output_features)
+        elif callable(stddev_initializer):
+            stddev = stddev_initializer(input_features, output_features)
+        else:
+            stddev = stddev_initializer
+
         # init weights
         self._wi = Tensor.randn(
             (input_features, output_features), 
-            (2/(input_features * output_features))**(1/2), 
+            stddev, 
             requires_grad=True)
         
         # init biases
         self._bias = Tensor.zeros((output_features, ), requires_grad=True)
 
-    def __call__(self, x: Tensor) -> Any:
-        return dot(x, self._wi) + self._bias
+        # activation
+        self._activation = activation
+
+    def __call__(self, x: Tensor) -> Tensor | Any:
+        output = dot(x, self._wi) + self._bias
+        if self._activation:
+            return self._activation(output)
+        return output
     
     @property
     def parameters(self) -> list[Tensor]:
