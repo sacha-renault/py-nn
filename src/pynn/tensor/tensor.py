@@ -133,28 +133,28 @@ class Tensor:
     # OPERATIONS
     def __mul__(self, other: Tensor) -> Tensor:
         result = Multiplication.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Multiplication)
         return tensor
     
     def __add__(self, other: Tensor) -> Tensor:
         result = Addition.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Addition)
         return tensor
     
     def __sub__(self, other: Tensor) -> Tensor:
         result = Subtraction.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Subtraction)
         return tensor
     
     def __truediv__(self, other: Tensor) -> Tensor:
         result = Division.forward(self.values, other.values)
-        tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
+        tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Division)
         return tensor
