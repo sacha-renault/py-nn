@@ -3,6 +3,7 @@ from collections.abc import Callable
 from .layer import Layer
 from .. import xp
 from ..tensor import Tensor
+from ..tensor.sub_class import BiasTensor, WeightTensor
 from ..math import dot
 from ..types import auto_convert_to_cupy
 from ..utils.initializer import initializer_xavier_relu
@@ -22,13 +23,13 @@ class Dense(Layer):
             stddev = stddev_initializer
 
         # init weights
-        self._wi = Tensor.randn(
+        self._wi = WeightTensor.randn(
             (input_features, output_features), 
             stddev, 
             requires_grad=True)
         
         # init biases
-        self._bias = Tensor.zeros((output_features, ), requires_grad=True)
+        self._bias = BiasTensor.zeros((output_features, ), requires_grad=True)
 
         # activation
         self._activation = activation

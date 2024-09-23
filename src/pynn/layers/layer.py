@@ -5,7 +5,7 @@ from ..tensor import Tensor
 
 class Layer(ABC):
     @abstractmethod
-    def __call__(self, x: Tensor) -> Tensor: ...
+    def __call__(self, x: Tensor, *args, **kwargs) -> Tensor: ...
 
     @property
     @abstractmethod

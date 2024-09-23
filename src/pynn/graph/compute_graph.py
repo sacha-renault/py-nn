@@ -1,4 +1,5 @@
 from ..tensor import Tensor
+from ..tensor.sub_class import WeightTensor, BiasTensor
 from .. import xp
 
 def _topological_order(output_tensor: Tensor) -> list[Tensor]:
@@ -41,3 +42,18 @@ class ComputeGraph:
             
         for node in reversed(self.__ordered_nodes):
             node.backward()
+
+    def zero_grad(self) -> None:
+        for node in self.__ordered_nodes:
+            node.zero_grad()
+
+    def is_tensor_in(self, tensor: Tensor) -> bool:
+        return tensor in self.__ordered_nodes
+
+    @property
+    def parameters(self) -> list[Tensor]:
+        params = []
+        for node in self.__ordered_nodes:
+            if isinstance(node, (WeightTensor, BiasTensor)):
+                params.append(node)
+        return params

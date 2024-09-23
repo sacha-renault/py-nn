@@ -99,6 +99,10 @@ class Tensor:
         if self.requires_grad and not Flags.no_grad():
             self.grads += grad_updates
 
+    def zero_grad(self) -> None:
+        if self.grads is not None:
+            self.grads.fill(0)
+
     def set_operation(self, operation: Operation) -> None:
         if (isinstance(operation, type) and issubclass(operation, Operation) or 
             isinstance(operation, Operation)):
