@@ -27,6 +27,16 @@ class Model:
         if not all([self._graph.is_tensor_in(x) for x in self.__inputs]):
             raise Exception("Broken graph") # TODO replace with an other exception
         
+    @property
+    def parameters(self) -> list[Tensor]:
+        return self._graph.parameters
+    
+    def auto_grad(self) -> None:
+        self._graph.backward()
+
+    def zero_grad(self) -> None:
+        self._graph.zero_grad()
+        
     def __call__(self, *args: Tensor) -> Tensor | list[Tensor]:
         if len(args) != len(self.__inputs):
             raise Exception(f"Model has {len(self.__inputs)} inputs, but {len(args)} were provided.")
