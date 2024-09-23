@@ -11,12 +11,12 @@ from ..types import (
 class _TensorView(Tensor):
     def __init__(self, ref_tensor: Tensor, slices: slice | list[slice]) -> None:
         self.__ref_tensor = ref_tensor
-        self.__slices = slices if isinstance(slice, list) else [slices]
+        self.__slices = slices if isinstance(slices, tuple) else [slices]
         self._op = None
 
     @property
     def shape(self):
-        return self.__ref_tensor.values[*self.__slices].shape
+        return self.values.shape
     
     @property
     def children(self):
