@@ -57,3 +57,6 @@ class ComputeGraph:
             if isinstance(node, (WeightTensor, BiasTensor)):
                 params.append(node)
         return params
+    
+    def __len__(self) -> int:
+        return len(self.__ordered_nodes)
