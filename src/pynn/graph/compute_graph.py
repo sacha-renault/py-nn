@@ -58,5 +58,9 @@ class ComputeGraph:
                 params.append(node)
         return params
     
+    @property
+    def nodes(self) -> list[Tensor]:
+        return self.__ordered_nodes
+    
     def __len__(self) -> int:
         return len(self.__ordered_nodes)
