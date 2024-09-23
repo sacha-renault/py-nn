@@ -5,27 +5,26 @@ from .. import xp
 from ..tensor import Tensor
 from ..tensor.sub_class import BiasTensor, WeightTensor
 from ..math import dot
-from ..types import auto_convert_to_cupy
-from ..utils.initializer import initializer_xavier_relu
+from ..types import auto_convert_to_cupy, _TensorArray
+from ..utils.initializer import he_initializer
 
 class Dense(Layer):
     def __init__(self, 
                 input_features: int, 
                 output_features: int,
                 activation = None,
-                stddev_initializer: xp.generic | Callable[[int, int], float] | None = None) -> None:
+                weight_initializer: _TensorArray | Callable[[int, int], float] | None = None) -> None:
         # get stddev value
-        if stddev_initializer is None:
-            stddev = initializer_xavier_relu(input_features, output_features)
-        elif callable(stddev_initializer):
-            stddev = stddev_initializer(input_features, output_features)
+        if weight_initializer is None:
+            weights = he_initializer(input_features, output_features)
+        elif callable(weight_initializer):
+            weights = weight_initializer(input_features, output_features)
         else:
-            stddev = stddev_initializer
+            weights = weight_initializer
 
         # init weights
-        self._wi = WeightTensor.randn(
-            (input_features, output_features), 
-            stddev, 
+        self._wi = WeightTensor.from_values( 
+            weights, 
             requires_grad=True)
         
         # init biases
