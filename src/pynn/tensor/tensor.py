@@ -64,6 +64,9 @@ class Tensor:
     def requires_grad(self) -> bool:
         return self.__requires_grad
     
+    def retains_grad(self) -> None:
+        self.__requires_grad = True
+    
     @property
     def shape(self):
         return self.__values.shape # we could use grad but it's the same in the end
@@ -98,6 +101,13 @@ class Tensor:
     def accumulate_grads(self, grad_updates: _TensorArray) -> None:
         if self.requires_grad and not Flags.no_grad():
             self.grads += grad_updates
+
+    def reshape(self, new_shape) -> Tensor:
+        reshaped = Tensor(new_shape, requires_grad=self.requires_grad)
+        reshaped.values = self.values.reshape(new_shape)
+        reshaped.grads = self.grads.reshape(new_shape)
+        reshaped.add_children(self)
+        return reshaped
 
     def zero_grad(self) -> None:
         if self.grads is not None:
@@ -170,7 +180,7 @@ class Tensor:
         # to avoid circular import, TensorView is imported here
         from .tensor_view import _TensorView
         tensor = _TensorView(self, key)
-        tensor.add_children(self)
+        # tensor.add_children(self)
         return tensor
     
     def __repr__(self) -> str:
