@@ -4,7 +4,7 @@ import numbers
 from .. import xp
 from ..flags import Flags
 from ..operations import (Operation, Multiplication, Addition, Subtraction, Division,
-                          Negation)
+                          Negation, Reshape)
 from ..types import (
     _float16, _float32, _float64,
     _TensorArray,
@@ -107,6 +107,7 @@ class Tensor:
         reshaped.values = self.values.reshape(new_shape)
         reshaped.grads = self.grads.reshape(new_shape)
         reshaped.add_children(self)
+        reshaped.set_operation(Reshape(self.shape, new_shape))
         return reshaped
 
     def zero_grad(self) -> None:
