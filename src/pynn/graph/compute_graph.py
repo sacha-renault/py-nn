@@ -5,7 +5,7 @@ from .. import xp
 def _topological_order(output_tensor: Tensor) -> list[Tensor]:
     seen = set()
     ordered_nodes: list[Tensor] = []
-    
+
     def build_graph(node: Tensor):
         if node in seen:
             return
@@ -28,7 +28,7 @@ class ComputeGraph:
         else:
             ordered_nodes = _topological_order(model_output)
             self.__outputs = [model_output]
-        
+
         self.__ordered_nodes = ordered_nodes
 
     def forward(self) -> None:
@@ -38,8 +38,8 @@ class ComputeGraph:
     def backward(self) -> None:
         # start by setting grad = 1 for every output
         for output in self.__outputs:
-            output.grads = xp.ones(output.shape)
-            
+            xp.copyto(output.grads, xp.ones(output.shape))
+
         for node in reversed(self.__ordered_nodes):
             node.backward()
 
@@ -57,10 +57,10 @@ class ComputeGraph:
             if isinstance(node, (WeightTensor, BiasTensor)):
                 params.append(node)
         return params
-    
+
     @property
     def nodes(self) -> list[Tensor]:
         return self.__ordered_nodes
-    
+
     def __len__(self) -> int:
         return len(self.__ordered_nodes)
