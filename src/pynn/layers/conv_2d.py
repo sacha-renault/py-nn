@@ -26,6 +26,7 @@ class Conv2d(Layer):
         num = self._kernel_size * self._kernel_size * self._num_channel_int
         limit = (6 / (self._num_channel_int + self._num_channel_out)) ** 0.5
         self._filters = WeightTensor.random((num, self._num_channel_out), -limit, limit, requires_grad=True)
+        # self._bias = BiasTensor.zeros((self._num_channel_out), requires_grad=True)
 
 
 
@@ -41,7 +42,7 @@ class Conv2d(Layer):
         # process convolution
         cols = im2col(tensor, self._kernel_size, self._strides)
         cols.retains_grad()
-        conv_output = dot(cols, self._filters)
+        conv_output = dot(cols, self._filters) #+ self._bias
 
         # if activation
         if self._activation:

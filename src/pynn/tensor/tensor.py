@@ -11,6 +11,21 @@ from ..types import (
     ensure_type, ensure_shape, auto_convert_to_cupy
 )
 
+def _topological_order(output_tensor: Tensor) -> list[Tensor]:
+    seen = set()
+    ordered_nodes: list[Tensor] = []
+
+    def build_graph(node: Tensor):
+        if node in seen:
+            return
+        seen.add(node)  # Add the node to the seen set
+        for child in node.children:
+            build_graph(child)
+        ordered_nodes.append(node)
+
+    build_graph(output_tensor)
+    return ordered_nodes
+
 class Tensor:
     def __init__(self, shape, requires_grad: bool = False) -> None:
         self.__values = xp.zeros(shape, dtype = Flags.global_type())
@@ -110,9 +125,13 @@ class Tensor:
         # reshaped.set_operation(Reshape(self.shape, new_shape))
         return reshaped
 
-    def zero_grad(self) -> None:
+    def _zero_grad(self) -> None:
         if self.grads is not None:
             self.grads.fill(0)
+
+    def zero_grad(self) -> None:
+        for node in _topological_order(self):
+            xp.copyto(node.grads, xp.zeros_like(node.grads))
 
     def set_operation(self, operation: Operation) -> None:
         if (isinstance(operation, type) and issubclass(operation, Operation) or
@@ -132,6 +151,11 @@ class Tensor:
             # self.values = result_values
 
     def backward(self) -> None:
+        xp.copyto(self.grads, xp.ones_like(self.grads))
+        for node in reversed(_topological_order(self)):
+            node._backward()
+
+    def _backward(self) -> None:
         if self._op is not None:
             children_grads_update = self._op.backward(
                 self.grads,
