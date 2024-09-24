@@ -18,7 +18,7 @@ class Adam(Optimizer):
 
     def _adam_step(self, param, m, v):
         m = self._beta1 * m + (1 - self._beta1) * param.grads
-        v = self._beta2 * v + (1 - self._beta2) * xp.pow(param.grads, 2)
+        v = self._beta2 * v + (1 - self._beta2) * xp.power(param.grads, 2)
         m_corr = m / (1 - self._beta1 ** self.t)
         v_corr = v / (1 - self._beta2 ** self.t)
         param.values -= self.learning_rate * (m_corr / (xp.sqrt(v_corr) + self._epsilon))
