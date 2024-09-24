@@ -100,3 +100,73 @@ def softmax(tensor: Tensor, axis: int = -1) -> Tensor:
     result_tensor.add_children(tensor)
     result_tensor.set_operation(op)
     return result_tensor
+
+
+def im2col(tensor: Tensor, kernel_size: int, stride: int) -> Tensor:
+    def forward(x):
+        # Get input dimensions
+        batch_size, input_height, input_width, input_channels = x.shape
+        kernel_height, kernel_width = kernel_size, kernel_size
+        stride_height, stride_width = stride, stride
+
+        # Calculate output dimensions
+        output_height = (input_height - kernel_height) // stride_height + 1
+        output_width = (input_width - kernel_width) // stride_width + 1
+
+        # Calculate strides for the original tensor
+        batch_stride, h_stride, w_stride, c_stride = x.strides
+        # Strides for the new im2col view (no copying, just a view)
+        new_shape = (batch_size, output_height, output_width, kernel_height, kernel_width, input_channels)
+        new_strides = (batch_stride, h_stride * stride_height, w_stride * stride_width, h_stride, w_stride, c_stride)
+
+        # Create strided view using as_strided (no data copying)
+        col_view = xp.lib.stride_tricks.as_strided(x, shape=new_shape, strides=new_strides)
+
+        # Ensure reshaping does not break the view and keep references
+        col_flat = col_view.reshape(batch_size * output_height * output_width, kernel_height * kernel_width * input_channels)
+        return col_flat
+
+    def backward(parent_grad, parent_values, x):
+        batch_size, input_height, input_width, input_channels = x.shape
+        kernel_height, kernel_width = kernel_size, kernel_size
+        stride_height, stride_width = stride, stride
+
+        # Calculate output dimensions
+        output_height = (input_height - kernel_height) // stride_height + 1
+        output_width = (input_width - kernel_width) // stride_width + 1
+
+        # Initialize an empty tensor to store the gradient w.r.t. the input
+        dx = xp.zeros_like(x)
+
+        # Reshape the parent_grad to match the expected shape (batch_size, num_patches, kernel_size * input_channels)
+        grad_reshaped = parent_grad.reshape(batch_size, output_height * output_width, kernel_height, kernel_width, input_channels)
+
+        # Iterate over each patch and accumulate gradients back to the input tensor
+        col_idx = 0
+        for i in range(output_height):
+            for j in range(output_width):
+                # Extract the grad patch correctly
+                grad_patch = grad_reshaped[:, col_idx, :, :, :]  # Patch already reshaped to (batch_size, kernel_height, kernel_width, input_channels)
+                
+                # Accumulate gradients back to the original tensor
+                dx[:, 
+                i * stride_height : i * stride_height + kernel_height, 
+                j * stride_width : j * stride_width + kernel_width, 
+                :] += grad_patch
+                col_idx += 1
+
+        return dx,
+
+    # Define the operation using LambdaOperation
+    op = LambdaOperation(forward, backward)
+
+    # Perform the forward pass
+    result = op.forward(tensor.values)
+    result_tensor = Tensor.from_values(result, requires_grad=tensor.requires_grad)
+
+    # Add the original tensor as a child and set the operation
+    result_tensor.add_children(tensor)
+    result_tensor.set_operation(op)
+
+    return result_tensor
+
