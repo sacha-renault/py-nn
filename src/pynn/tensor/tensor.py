@@ -24,49 +24,49 @@ class Tensor:
         tensor = cls(shape, requires_grad)
         tensor.values = xp.zeros(shape, dtype = Flags.global_type())
         return tensor
-    
+
     @classmethod
     def ones(cls, shape, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
         tensor.values = xp.ones(shape, dtype = Flags.global_type())
         return tensor
-    
+
     @classmethod
     def full(cls, shape, value, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
         tensor.values = xp.full(shape, value, dtype = Flags.global_type())
         return tensor
-    
+
     @classmethod
     def randn(cls, shape, mean = 0, stddev = 1, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
         tensor.values = xp.random.normal(mean, stddev, shape) # will be casted by ensure_type
         return tensor
-    
+
     @classmethod
     def random(cls, shape, min = 0, max = 1, requires_grad: bool = False) -> Tensor:
         tensor = cls(shape, requires_grad)
         tensor.values = xp.random.rand(*shape) * (max - min) + min
         return tensor
-    
+
     @classmethod
     @auto_convert_to_cupy
     def from_values(cls, values: _TensorArray, requires_grad: bool = False) -> Tensor:
         tensor = cls(values.shape, requires_grad)
-        tensor.values = values 
+        tensor.values = values
         return tensor
 
     @property
     def children(self) -> list[Tensor]:
         return self.__children
-    
+
     @property
     def requires_grad(self) -> bool:
         return self.__requires_grad
-    
+
     def retains_grad(self) -> None:
         self.__requires_grad = True
-    
+
     @property
     def shape(self):
         return self.__values.shape # we could use grad but it's the same in the end
@@ -74,7 +74,7 @@ class Tensor:
     @property
     def values(self) -> _TensorArray:
         return self.__values
-    
+
     @values.setter
     @ensure_type
     @ensure_shape
@@ -88,7 +88,7 @@ class Tensor:
     @property
     def grads(self) -> _TensorArray:
         return self.__grads
-    
+
     @grads.setter
     @ensure_type
     @ensure_shape
@@ -96,7 +96,7 @@ class Tensor:
         if not isinstance(other, xp.ndarray):
             raise TypeError("other must be an array")
         self.__grads = other
-    
+
     @ensure_type
     def accumulate_grads(self, grad_updates: _TensorArray) -> None:
         if self.requires_grad and not Flags.no_grad():
@@ -115,7 +115,7 @@ class Tensor:
             self.grads.fill(0)
 
     def set_operation(self, operation: Operation) -> None:
-        if (isinstance(operation, type) and issubclass(operation, Operation) or 
+        if (isinstance(operation, type) and issubclass(operation, Operation) or
             isinstance(operation, Operation)):
             self._op = operation
         else:
@@ -149,41 +149,41 @@ class Tensor:
         tensor.add_children(self, other)
         tensor.set_operation(Multiplication)
         return tensor
-    
+
     def __add__(self, other: Tensor) -> Tensor:
         result = Addition.forward(self.values, other.values)
         tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Addition)
         return tensor
-    
+
     def __sub__(self, other: Tensor) -> Tensor:
         result = Subtraction.forward(self.values, other.values)
         tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Subtraction)
         return tensor
-    
+
     def __truediv__(self, other: Tensor) -> Tensor:
         result = Division.forward(self.values, other.values)
         tensor = Tensor.from_values(result, requires_grad=self.requires_grad or other.requires_grad)
         tensor.add_children(self, other)
         tensor.set_operation(Division)
         return tensor
-    
+
     def __neg__(self) -> Tensor:
         result = -self.values
         tensor = Tensor.from_values(result, requires_grad=self.requires_grad)
         tensor.add_children(self)
         tensor.set_operation(Negation)
         return tensor
-    
-    def __getitem__(self, key) -> Tensor: 
+
+    def __getitem__(self, key) -> Tensor:
         # to avoid circular import, TensorView is imported here
         from .tensor_view import _TensorView
         tensor = _TensorView(self, key)
         # tensor.add_children(self)
         return tensor
-    
+
     def __repr__(self) -> str:
         return f"<Tensor: shape={self.shape}>"
