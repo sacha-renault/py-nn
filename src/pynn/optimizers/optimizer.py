@@ -3,6 +3,9 @@ from ..flags import Flags
 from ..tensor import Tensor
 
 class Optimizer(ABC):
+    def __init__(self, lr) -> None:
+        self.learning_rate = lr
+
     @property
     def learning_rate(self) -> float:
         return self._lr
