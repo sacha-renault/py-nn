@@ -11,15 +11,22 @@ from ..utils.initializer import he_initializer
 
 class Conv2d(Layer):
     def __init__(self,
-                 num_filter: int,
+                 num_channel_int: int,
+                 num_channel_out: int,
                  kernel_size: int = 3,
                  strides: int = 1,
                  activation = None) -> None:
-        self._num_filter = num_filter
+        self._num_channel_int = num_channel_int
+        self._num_channel_out = num_channel_out
         self._kernel_size = kernel_size
         self._strides = strides
-        self._activation = activation       
-        
+        self._activation = activation
+
+        # init filters
+        num = self._kernel_size * self._kernel_size * self._num_channel_int
+        limit = (6 / (self._num_channel_int + self._num_channel_out)) ** 0.5
+        self._filters = WeightTensor.random((num, self._num_channel_out), -limit, limit, requires_grad=True)
+
 
 
     def __call__(self, tensor: Tensor) -> Tensor:
@@ -31,26 +38,21 @@ class Conv2d(Layer):
         output_height = (input_height - self._kernel_size) // self._strides + 1
         output_width = (input_width - self._kernel_size) // self._strides + 1
 
-        # init filters
-        num = self._kernel_size * self._kernel_size * input_channels
-        limit = (6 / (input_channels * input_height * input_width + self._num_filter * input_height * input_width)) ** 0.5
-        self._filters = WeightTensor.random((num, self._num_filter), -limit, limit, requires_grad=True)
-
         # process convolution
         cols = im2col(tensor, self._kernel_size, self._strides)
         cols.retains_grad()
         conv_output = dot(cols, self._filters)
 
-        # if activation 
+        # if activation
         if self._activation:
             conv_output = self._activation(conv_output)
-        
+
         # Reshape conv_output to the correct output shape
-        new_shape = (batch_size, output_height, output_width, self._num_filter)
+        new_shape = (batch_size, output_height, output_width, self._num_channel_out)
         reshaped = conv_output.reshape(new_shape)
         return reshaped
 
-    
+
     @property
     def parameters(self) -> list[Tensor]:
         return [self._filters]
@@ -67,4 +69,3 @@ class Conv2d(Layer):
             raise TypeError("to set param, should use Tensor or ndarray")
 
 
-    
