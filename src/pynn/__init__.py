@@ -20,5 +20,3 @@ if USE_CUDA:
 else:
     import numpy as xp  # Fallback to NumPy
     print("PyNN is using numPy")
-
-# You can now use xp for array operations and it will be either NumPy or CuPy
